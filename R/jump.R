@@ -17,6 +17,7 @@ get_search_fn <- function() {
 
     switch(search_tool,
         "rg" = ripgrep,
+        "grep" = gnugrep,
         function(fn_name) stop("unsupported definition search tool:", search_tool)
     )
 }
@@ -36,5 +37,23 @@ ripgrep <- function(fn_name) {
         file = result_components[[1]],
         row = result_components[[2]],
         col = result_components[[3]]
+    )
+}
+
+gnugrep <- function(fn_name) {
+    search_regex <- glue::glue("\'\\b{fn_name}\\s*(<-|=)\\s*\'")
+    other_args <- c("-rnE", "--include", "\\*.R", ".")
+    result <- system2("grep", args = c(search_regex, other_args), stdout = TRUE)
+
+    if (length(result) < 1) {
+        return(list())
+    }
+
+    result_components <- strsplit(result, ":")[[1]]
+
+    list(
+        file = result_components[[1]],
+        row = result_components[[2]],
+        col = 1
     )
 }
